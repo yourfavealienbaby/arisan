@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Arisan Tracker</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: #f3efe8;
+  }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    color: #2d2a26;
+    padding: 20px 12px 40px;
+    min-height: 100vh;
+  }
+  .wrap { max-width: 480px; margin: 0 auto; width: 100%; }
+  header { text-align: center; margin-bottom: 20px; }
+  h1 {
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin: 0 0 4px 0;
+    color: #1a1815;
+  }
+  .sub { margin: 0; color: #8a8378; font-size: 0.85rem; }
+
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .stat {
+    background: #faf8f5;
+    border: 1px solid #e8e2d9;
+    border-radius: 12px;
+    padding: 10px 6px;
+    text-align: center;
+    min-width: 0;
+  }
+  .stat-label {
+    display: block;
+    font-size: 0.62rem;
+    color: #8a8378;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+  }
+  .stat-value {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #1a1815;
+    word-break: break-word;
+  }
+
+  .progress-bar-outer {
+    height: 8px;
+    background: #ece6db;
+    border-radius: 999px;
+    overflow: hidden;
+    margin-bottom: 20px;
+  }
+  .progress-bar-inner {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #c9793f, #d9a441);
+    border-radius: 999px;
+    transition: width 0.3s ease;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 6px;
+    margin-bottom: 20px;
+  }
+  .cell {
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    border: 1px solid #e8e2d9;
+    background: #faf8f5;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #a39c8f;
+    cursor: pointer;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    transition: all 0.15s ease;
+  }
+  .cell:active { transform: scale(0.93); }
+  .cell.checked {
+    background: #c9793f;
+    border-color: #c9793f;
+    color: #fff;
+  }
+
+  .payout-box {
+    background: #faf8f5;
+    border: 1px solid #e8e2d9;
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-bottom: 20px;
+  }
+  .payout-title {
+    font-size: 0.7rem;
+    color: #8a8378;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    margin-bottom: 10px;
+  }
+  .payout-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.85rem;
+    padding: 4px 0;
+    color: #57524a;
+    gap: 8px;
+  }
+  .payout-row.payout-net {
+    border-top: 1px solid #e8e2d9;
+    margin-top: 6px;
+    padding-top: 10px;
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: #1a1815;
+  }
+
+  .footer-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .reset-btn {
+    background: none;
+    border: 1px solid #e8e2d9;
+    color: #8a8378;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    cursor: pointer;
+  }
+  .reset-btn:active { border-color: #c9793f; color: #c9793f; }
+  .save-status {
+    font-size: 0.75rem;
+    color: #a39c8f;
+  }
+
+  @media (min-width: 420px) {
+    .grid { grid-template-columns: repeat(9, 1fr); }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Arisan Tracker</h1>
+    <p class="sub">45x putaran · Rp300.000 / minggu</p>
+  </header>
+
+  <div class="stats">
+    <div class="stat">
+      <span class="stat-label">Sudah Bayar</span>
+      <span class="stat-value" id="paidCount">-</span>
+    </div>
+    <div class="stat">
+      <span class="stat-label">Terkumpul</span>
+      <span class="stat-value" id="paidTotal">-</span>
+    </div>
+    <div class="stat">
+      <span class="stat-label">Sisa</span>
+      <span class="stat-value" id="remaining">-</span>
+    </div>
+  </div>
+
+  <div class="progress-bar-outer">
+    <div class="progress-bar-inner" id="progressBar"></div>
+  </div>
+
+  <div id="grid" class="grid"></div>
+
+  <div class="payout-box">
+    <div class="payout-title">Estimasi Perolehan Arisan</div>
+    <div class="payout-row">
+      <span>Total pot (45 × 300rb)</span>
+      <span id="grossTotal">-</span>
+    </div>
+    <div class="payout-row">
+      <span>Potongan admin (1%)</span>
+      <span id="adminFee">-</span>
+    </div>
+    <div class="payout-row payout-net">
+      <span>Diterima bersih</span>
+      <span id="netTotal">-</span>
+    </div>
+  </div>
+
+  <div class="footer-row">
+    <button id="resetBtn" class="reset-btn">Reset semua</button>
+    <span id="saveStatus" class="save-status"></span>
+  </div>
+</div>
+
+<script>
+(function() {
+  const TOTAL_WEEKS = 45;
+  const WEEKLY_AMOUNT = 300000;
+  const STORAGE_KEY = 'arisan-progress';
+  const DEFAULT_PAID_UP_TO = 19;
+  const ADMIN_FEE_RATE = 0.01;
+
+  let checked = new Set();
+
+  function formatRupiah(n) {
+    return 'Rp' + n.toLocaleString('id-ID');
+  }
+
+  function render() {
+    const grid = document.getElementById('grid');
+    grid.innerHTML = '';
+    for (let i = 1; i <= TOTAL_WEEKS; i++) {
+      const cell = document.createElement('div');
+      cell.className = 'cell';
+      if (checked.has(i)) cell.classList.add('checked');
+      cell.textContent = i;
+      cell.addEventListener('click', () => toggle(i));
+      grid.appendChild(cell);
+    }
+
+    const paidCount = checked.size;
+    document.getElementById('paidCount').textContent = paidCount + ' / ' + TOTAL_WEEKS;
+    document.getElementById('paidTotal').textContent = formatRupiah(paidCount * WEEKLY_AMOUNT);
+    document.getElementById('remaining').textContent = (TOTAL_WEEKS - paidCount) + ' mgg';
+    document.getElementById('progressBar').style.width = (paidCount / TOTAL_WEEKS * 100) + '%';
+
+    const grossTotal = TOTAL_WEEKS * WEEKLY_AMOUNT;
+    const adminFee = Math.round(grossTotal * ADMIN_FEE_RATE);
+    const netTotal = grossTotal - adminFee;
+    document.getElementById('grossTotal').textContent = formatRupiah(grossTotal);
+    document.getElementById('adminFee').textContent = '- ' + formatRupiah(adminFee);
+    document.getElementById('netTotal').textContent = formatRupiah(netTotal);
+  }
+
+  function toggle(i) {
+    if (checked.has(i)) {
+      checked.delete(i);
+    } else {
+      checked.add(i);
+    }
+    render();
+    save();
+  }
+
+  function save() {
+    const status = document.getElementById('saveStatus');
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(Array.from(checked)));
+      status.textContent = 'Tersimpan';
+      setTimeout(() => { status.textContent = ''; }, 1200);
+    } catch (e) {
+      status.textContent = 'Gagal menyimpan';
+    }
+  }
+
+  function load() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        checked = new Set(JSON.parse(raw));
+      } else {
+        for (let i = 1; i <= DEFAULT_PAID_UP_TO; i++) checked.add(i);
+        save();
+      }
+    } catch (e) {
+      for (let i = 1; i <= DEFAULT_PAID_UP_TO; i++) checked.add(i);
+    }
+    render();
+  }
+
+  document.getElementById('resetBtn').addEventListener('click', function() {
+    if (confirm('Reset semua tanda? Ini akan menghapus progress.')) {
+      checked = new Set();
+      render();
+      save();
+    }
+  });
+
+  load();
+})();
+</script>
+</body>
+</html>
