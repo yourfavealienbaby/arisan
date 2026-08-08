@@ -1,45 +1,20 @@
-<div id="app">
-  <div class="wrap">
-    <header>
-      <h1>Arisan Tracker</h1>
-      <p class="sub">45x putaran · 300.000 / minggu</p>
-    </header>
-
-    <div class="stats">
-      <div class="stat">
-        <span class="stat-label">Sudah Bayar</span>
-        <span class="stat-value" id="paidCount">-</span>
-      </div>
-      <div class="stat">
-        <span class="stat-label">Total Terkumpul</span>
-        <span class="stat-value" id="paidTotal">-</span>
-      </div>
-      <div class="stat">
-        <span class="stat-label">Sisa Setoran</span>
-        <span class="stat-value" id="remaining">-</span>
-      </div>
-    </div>
-
-    <div class="progress-bar-outer">
-      <div class="progress-bar-inner" id="progressBar"></div>
-    </div>
-
-    <div id="grid" class="grid"></div>
-
-    <div class="footer-row">
-      <button id="resetBtn" class="reset-btn">Reset semua</button>
-      <span id="saveStatus" class="save-status"></span>
-    </div>
-  </div>
-</div>
-
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Arisan Tracker</title>
 <style>
   * { box-sizing: border-box; }
-  #app {
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: #f3efe8;
+  }
+  body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    background: transparent;
     color: #2d2a26;
-    padding: 8px;
+    padding: 16px;
   }
   .wrap { max-width: 640px; margin: 0 auto; }
   header { text-align: center; margin-bottom: 20px; }
@@ -63,10 +38,11 @@
     border-radius: 12px;
     padding: 12px 8px;
     text-align: center;
+    min-width: 0;
   }
   .stat-label {
     display: block;
-    font-size: 0.7rem;
+    font-size: 0.65rem;
     color: #8a8378;
     margin-bottom: 4px;
     text-transform: uppercase;
@@ -74,9 +50,10 @@
   }
   .stat-value {
     display: block;
-    font-size: 1.05rem;
+    font-size: 0.95rem;
     font-weight: 700;
     color: #1a1815;
+    word-break: break-word;
   }
 
   .progress-bar-outer {
@@ -96,7 +73,7 @@
 
   .grid {
     display: grid;
-    grid-template-columns: repeat(9, 1fr);
+    grid-template-columns: repeat(7, 1fr);
     gap: 6px;
     margin-bottom: 20px;
   }
@@ -108,11 +85,12 @@
     border-radius: 8px;
     border: 1px solid #e8e2d9;
     background: #faf8f5;
-    font-size: 0.75rem;
+    font-size: 0.8rem;
     font-weight: 600;
     color: #a39c8f;
     cursor: pointer;
     user-select: none;
+    -webkit-tap-highlight-color: transparent;
     transition: all 0.15s ease;
   }
   .cell:hover { border-color: #d9a441; }
@@ -121,22 +99,52 @@
     border-color: #c9793f;
     color: #fff;
   }
-  .cell.current {
-    box-shadow: 0 0 0 2px #d9a441;
+
+  .payout-box {
+    background: #faf8f5;
+    border: 1px solid #e8e2d9;
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-bottom: 20px;
+  }
+  .payout-title {
+    font-size: 0.75rem;
+    color: #8a8378;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    margin-bottom: 10px;
+  }
+  .payout-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.9rem;
+    padding: 4px 0;
+    color: #57524a;
+    gap: 12px;
+  }
+  .payout-row.payout-net {
+    border-top: 1px solid #e8e2d9;
+    margin-top: 6px;
+    padding-top: 10px;
+    font-weight: 700;
+    font-size: 1rem;
+    color: #1a1815;
   }
 
   .footer-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
   }
   .reset-btn {
     background: none;
     border: 1px solid #e8e2d9;
     color: #8a8378;
-    padding: 6px 14px;
+    padding: 8px 16px;
     border-radius: 8px;
-    font-size: 0.8rem;
+    font-size: 0.85rem;
     cursor: pointer;
   }
   .reset-btn:hover { border-color: #c9793f; color: #c9793f; }
@@ -145,10 +153,65 @@
     color: #a39c8f;
   }
 
-  @media (max-width: 420px) {
+  @media (min-width: 480px) {
+    .grid { grid-template-columns: repeat(9, 1fr); }
+    .stat-value { font-size: 1.05rem; }
+  }
+
+  @media (max-width: 340px) {
     .grid { grid-template-columns: repeat(6, 1fr); }
   }
 </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>Arisan Tracker</h1>
+      <p class="sub">45x putaran · Rp300.000 / minggu</p>
+    </header>
+
+    <div class="stats">
+      <div class="stat">
+        <span class="stat-label">Sudah Bayar</span>
+        <span class="stat-value" id="paidCount">-</span>
+      </div>
+      <div class="stat">
+        <span class="stat-label">Terkumpul</span>
+        <span class="stat-value" id="paidTotal">-</span>
+      </div>
+      <div class="stat">
+        <span class="stat-label">Sisa</span>
+        <span class="stat-value" id="remaining">-</span>
+      </div>
+    </div>
+
+    <div class="progress-bar-outer">
+      <div class="progress-bar-inner" id="progressBar"></div>
+    </div>
+
+    <div id="grid" class="grid"></div>
+
+    <div class="payout-box">
+      <div class="payout-title">Estimasi Perolehan Arisan</div>
+      <div class="payout-row">
+        <span>Total pot (45 × 300rb)</span>
+        <span id="grossTotal">-</span>
+      </div>
+      <div class="payout-row">
+        <span>Potongan admin (1%)</span>
+        <span id="adminFee">-</span>
+      </div>
+      <div class="payout-row payout-net">
+        <span>Diterima bersih</span>
+        <span id="netTotal">-</span>
+      </div>
+    </div>
+
+    <div class="footer-row">
+      <button id="resetBtn" class="reset-btn">Reset semua</button>
+      <span id="saveStatus" class="save-status"></span>
+    </div>
+  </div>
 
 <script>
 (function() {
@@ -156,6 +219,7 @@
   const WEEKLY_AMOUNT = 300000;
   const STORAGE_KEY = 'arisan-progress';
   const DEFAULT_PAID_UP_TO = 19; // seed default: sudah sampai minggu ke-19
+  const ADMIN_FEE_RATE = 0.01; // 1%
 
   let checked = new Set();
 
@@ -178,24 +242,31 @@
     const paidCount = checked.size;
     document.getElementById('paidCount').textContent = paidCount + ' / ' + TOTAL_WEEKS;
     document.getElementById('paidTotal').textContent = formatRupiah(paidCount * WEEKLY_AMOUNT);
-    document.getElementById('remaining').textContent = (TOTAL_WEEKS - paidCount) + ' minggu';
+    document.getElementById('remaining').textContent = (TOTAL_WEEKS - paidCount) + ' mgg';
     document.getElementById('progressBar').style.width = (paidCount / TOTAL_WEEKS * 100) + '%';
+
+    const grossTotal = TOTAL_WEEKS * WEEKLY_AMOUNT;
+    const adminFee = Math.round(grossTotal * ADMIN_FEE_RATE);
+    const netTotal = grossTotal - adminFee;
+    document.getElementById('grossTotal').textContent = formatRupiah(grossTotal);
+    document.getElementById('adminFee').textContent = '- ' + formatRupiah(adminFee);
+    document.getElementById('netTotal').textContent = formatRupiah(netTotal);
   }
 
-  async function toggle(i) {
+  function toggle(i) {
     if (checked.has(i)) {
       checked.delete(i);
     } else {
       checked.add(i);
     }
     render();
-    await save();
+    save();
   }
 
-  async function save() {
+  function save() {
     const status = document.getElementById('saveStatus');
     try {
-      await window.storage.set(STORAGE_KEY, JSON.stringify(Array.from(checked)), false);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(Array.from(checked)));
       status.textContent = 'Tersimpan';
       setTimeout(() => { status.textContent = ''; }, 1200);
     } catch (e) {
@@ -204,15 +275,15 @@
     }
   }
 
-  async function load() {
+  function load() {
     try {
-      const result = await window.storage.get(STORAGE_KEY, false);
-      if (result && result.value) {
-        checked = new Set(JSON.parse(result.value));
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        checked = new Set(JSON.parse(raw));
       } else {
         // seed pertama kali: tandai minggu 1 s/d 19
         for (let i = 1; i <= DEFAULT_PAID_UP_TO; i++) checked.add(i);
-        await save();
+        save();
       }
     } catch (e) {
       for (let i = 1; i <= DEFAULT_PAID_UP_TO; i++) checked.add(i);
@@ -220,14 +291,16 @@
     render();
   }
 
-  document.getElementById('resetBtn').addEventListener('click', async () => {
+  document.getElementById('resetBtn').addEventListener('click', () => {
     if (confirm('Reset semua tanda? Ini akan menghapus progress.')) {
       checked = new Set();
       render();
-      await save();
+      save();
     }
   });
 
   load();
 })();
 </script>
+</body>
+</html>
