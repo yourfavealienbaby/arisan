@@ -1,0 +1,233 @@
+<div id="app">
+  <div class="wrap">
+    <header>
+      <h1>Arisan Tracker</h1>
+      <p class="sub">45x putaran · 300.000 / minggu</p>
+    </header>
+
+    <div class="stats">
+      <div class="stat">
+        <span class="stat-label">Sudah Bayar</span>
+        <span class="stat-value" id="paidCount">-</span>
+      </div>
+      <div class="stat">
+        <span class="stat-label">Total Terkumpul</span>
+        <span class="stat-value" id="paidTotal">-</span>
+      </div>
+      <div class="stat">
+        <span class="stat-label">Sisa Setoran</span>
+        <span class="stat-value" id="remaining">-</span>
+      </div>
+    </div>
+
+    <div class="progress-bar-outer">
+      <div class="progress-bar-inner" id="progressBar"></div>
+    </div>
+
+    <div id="grid" class="grid"></div>
+
+    <div class="footer-row">
+      <button id="resetBtn" class="reset-btn">Reset semua</button>
+      <span id="saveStatus" class="save-status"></span>
+    </div>
+  </div>
+</div>
+
+<style>
+  * { box-sizing: border-box; }
+  #app {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: transparent;
+    color: #2d2a26;
+    padding: 8px;
+  }
+  .wrap { max-width: 640px; margin: 0 auto; }
+  header { text-align: center; margin-bottom: 20px; }
+  h1 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0 0 4px 0;
+    color: #1a1815;
+  }
+  .sub { margin: 0; color: #8a8378; font-size: 0.9rem; }
+
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .stat {
+    background: #faf8f5;
+    border: 1px solid #e8e2d9;
+    border-radius: 12px;
+    padding: 12px 8px;
+    text-align: center;
+  }
+  .stat-label {
+    display: block;
+    font-size: 0.7rem;
+    color: #8a8378;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+  .stat-value {
+    display: block;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #1a1815;
+  }
+
+  .progress-bar-outer {
+    height: 8px;
+    background: #ece6db;
+    border-radius: 999px;
+    overflow: hidden;
+    margin-bottom: 20px;
+  }
+  .progress-bar-inner {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #c9793f, #d9a441);
+    border-radius: 999px;
+    transition: width 0.3s ease;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(9, 1fr);
+    gap: 6px;
+    margin-bottom: 20px;
+  }
+  .cell {
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    border: 1px solid #e8e2d9;
+    background: #faf8f5;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #a39c8f;
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.15s ease;
+  }
+  .cell:hover { border-color: #d9a441; }
+  .cell.checked {
+    background: #c9793f;
+    border-color: #c9793f;
+    color: #fff;
+  }
+  .cell.current {
+    box-shadow: 0 0 0 2px #d9a441;
+  }
+
+  .footer-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .reset-btn {
+    background: none;
+    border: 1px solid #e8e2d9;
+    color: #8a8378;
+    padding: 6px 14px;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    cursor: pointer;
+  }
+  .reset-btn:hover { border-color: #c9793f; color: #c9793f; }
+  .save-status {
+    font-size: 0.75rem;
+    color: #a39c8f;
+  }
+
+  @media (max-width: 420px) {
+    .grid { grid-template-columns: repeat(6, 1fr); }
+  }
+</style>
+
+<script>
+(function() {
+  const TOTAL_WEEKS = 45;
+  const WEEKLY_AMOUNT = 300000;
+  const STORAGE_KEY = 'arisan-progress';
+  const DEFAULT_PAID_UP_TO = 19; // seed default: sudah sampai minggu ke-19
+
+  let checked = new Set();
+
+  function formatRupiah(n) {
+    return 'Rp' + n.toLocaleString('id-ID');
+  }
+
+  function render() {
+    const grid = document.getElementById('grid');
+    grid.innerHTML = '';
+    for (let i = 1; i <= TOTAL_WEEKS; i++) {
+      const cell = document.createElement('div');
+      cell.className = 'cell';
+      if (checked.has(i)) cell.classList.add('checked');
+      cell.textContent = i;
+      cell.addEventListener('click', () => toggle(i));
+      grid.appendChild(cell);
+    }
+
+    const paidCount = checked.size;
+    document.getElementById('paidCount').textContent = paidCount + ' / ' + TOTAL_WEEKS;
+    document.getElementById('paidTotal').textContent = formatRupiah(paidCount * WEEKLY_AMOUNT);
+    document.getElementById('remaining').textContent = (TOTAL_WEEKS - paidCount) + ' minggu';
+    document.getElementById('progressBar').style.width = (paidCount / TOTAL_WEEKS * 100) + '%';
+  }
+
+  async function toggle(i) {
+    if (checked.has(i)) {
+      checked.delete(i);
+    } else {
+      checked.add(i);
+    }
+    render();
+    await save();
+  }
+
+  async function save() {
+    const status = document.getElementById('saveStatus');
+    try {
+      await window.storage.set(STORAGE_KEY, JSON.stringify(Array.from(checked)), false);
+      status.textContent = 'Tersimpan';
+      setTimeout(() => { status.textContent = ''; }, 1200);
+    } catch (e) {
+      status.textContent = 'Gagal menyimpan';
+      console.error('Save error:', e);
+    }
+  }
+
+  async function load() {
+    try {
+      const result = await window.storage.get(STORAGE_KEY, false);
+      if (result && result.value) {
+        checked = new Set(JSON.parse(result.value));
+      } else {
+        // seed pertama kali: tandai minggu 1 s/d 19
+        for (let i = 1; i <= DEFAULT_PAID_UP_TO; i++) checked.add(i);
+        await save();
+      }
+    } catch (e) {
+      for (let i = 1; i <= DEFAULT_PAID_UP_TO; i++) checked.add(i);
+    }
+    render();
+  }
+
+  document.getElementById('resetBtn').addEventListener('click', async () => {
+    if (confirm('Reset semua tanda? Ini akan menghapus progress.')) {
+      checked = new Set();
+      render();
+      await save();
+    }
+  });
+
+  load();
+})();
+</script>
